@@ -1,0 +1,24 @@
+name: SOPS
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  sops:
+    name: Init & test tools
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup SOPS
+      run: |
+        curl -LO https://github.com/getsops/sops/releases/download/v3.8.0-rc.1/sops-v3.8.0-rc.1.linux.amd64
+        mv sops-v3.8.0-rc.1.linux.amd64 /usr/local/bin/sops
+        chmod +x /usr/local/bin/sops
+
+    - name: Test tools
+      run: |
+        gpg --list-keys
+        sops -v
