@@ -32,7 +32,7 @@ jobs:
     - name: Build
       run: |
         npm install
-        npm run build
+        npm run build:aws
     
     - name: Archive artifacts
       uses: actions/upload-artifact@v3
