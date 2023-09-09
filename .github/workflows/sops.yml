@@ -1,12 +1,11 @@
 name: SOPS
 
 on:
-  push:
-    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   sops:
-    name: Init & test tools
+    name: Init SOPS & PGP
     runs-on: ubuntu-22.04
 
     steps:
@@ -18,7 +17,15 @@ jobs:
         mv sops-v3.8.0-rc.1.linux.amd64 /usr/local/bin/sops
         chmod +x /usr/local/bin/sops
 
-    - name: Test tools
+    - name: Import key
       run: |
-        gpg --list-keys
-        sops -v
+        echo ${{ secrets.PGP_PRIVATE_KEY }} > pgp.key
+        gpg --import pgp.key
+
+    - name: Get encypted values
+      run: |
+        sops -d .env.enc.yaml
+
+    - name: Cleanup
+      run: |
+        rm -f .env.enc.yaml
