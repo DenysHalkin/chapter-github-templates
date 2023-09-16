@@ -5,7 +5,7 @@ on:
 
 jobs:
   sops:
-    name: TEST SOPS & PGP
+    name: test-sops-and-kms
     runs-on: ubuntu-22.04
 
     steps:
@@ -17,19 +17,20 @@ jobs:
         mv sops-v3.8.0-rc.1.linux.amd64 /usr/local/bin/sops
         chmod +x /usr/local/bin/sops
 
-    - name: Test tools
+    - name: Test sops
       run: |
         sops -v
-        gpg --list-keys
 
-    - name: Import key
-      run: |
-        echo ${{ secrets.PGP_PRIVATE_KEY }} > pgp.key
-        gpg --import pgp.key
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
 
     - name: Get encypted values
       run: |
-        sops -d .env.enc.yaml
+        sops exec-env .env.enc.yaml 'echo $VITE_API_BASE_URL & echo $VITE_TWITTER_REDIRECT_URI'
 
     - name: Cleanup
       run: |
