@@ -9,6 +9,8 @@ on:
         required: true
       AWS_S3_BUCKET_NAME:
         required: true
+      CF_DISTRIBUTION_ID:
+        required: true
     inputs:
       ENVIRONMENT:
         required: true
@@ -21,7 +23,7 @@ jobs:
     environment: ${{ inputs.ENVIRONMENT }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Setup node
       uses: actions/setup-node@v3
@@ -36,7 +38,7 @@ jobs:
         chmod +x /usr/local/bin/sops
 
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -69,11 +71,14 @@ jobs:
           name: artifacts
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-west-2
           
       - name: Sync S3
-        run: aws s3 sync ./ s3://${{ secrets.AWS_S3_BUCKET_NAME }} --delete --sse AES256
+        run: aws s3 sync ./ s3://${{ secrets.AWS_S3_BUCKET_NAME }} --delete --sse AES256 --cache-control max-age=2592000,public
+
+      - name: Invalidate Cloudfront Cache
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CF_DISTRIBUTION_ID }} --paths "/*"
